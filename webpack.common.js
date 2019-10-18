@@ -4,6 +4,7 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 const webpack = require('webpack');
 const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
 module.exports = {
 	entry: {
@@ -22,13 +23,13 @@ module.exports = {
 		// 设置html模板生成路径
 		new HtmlWebpackPlugin({
 			filename: 'index.html',
-			template: './src/html/index.html',
-			chunks: ['jquery', 'index']
+			template: './src/html/index.ejs',
+			chunks: ['style', 'jquery', 'index']
 		}),
 		new HtmlWebpackPlugin({
             filename: 'login.html',
             template: './src/html/login.html',
-            chunks: ['jquery', 'login']
+            chunks: ['style', 'jquery', 'login']
         }),
         new webpack.ProvidePlugin({
         	$: 'jquery-1x',
@@ -37,7 +38,10 @@ module.exports = {
         new CopyWebpackPlugin([{
         	from: './src/static', 
         	to: 'static'
-        }])
+        }]),
+        new MiniCssExtractPlugin({
+        	filename: 'css/[name].css'
+        })
 	],
 	optimization: {
        	splitChunks: {
@@ -46,6 +50,12 @@ module.exports = {
                    	test: /jquery/,
                    	name: 'jquery',
                    	chunks: 'all'
+               	},
+               	styles: {
+               		test: /[\\/]common[\\/].+\.css$/,
+               		name: 'styles',
+               		chunks: 'all',
+               		enforce: true
                	}
            	}
        	},
@@ -75,11 +85,31 @@ module.exports = {
 			},
 			{
 				test: /\.css$/,
-				use: ['style-loader', 'css-loader']
+				use: [MiniCssExtractPlugin.loader, 'css-loader']
 			},
 			{
 				test: /\.styl$/,
-				use: ['style-loader', 'css-loader', 'stylus-loader']
+				use: [MiniCssExtractPlugin.loader, 'css-loader', 'stylus-loader']
+			},
+			{
+				test: /\.ejs/,
+				use: ['ejs-loader']
+			},
+			{
+				test: /\.(png|svg|jpg|gif|webp)$/,
+				use: [
+					{
+						loader: 'url-loader',
+						options: {
+							// 最终生成的css代码中，图片url前缀
+							publicPath: '../images',
+							// 图片输出的实际路径(相对于dist)
+							outputPath: 'images',
+							// 当小于某个KB时转为base64
+							limit: 0
+						}
+					}
+				]
 			}
 		]
 	}
